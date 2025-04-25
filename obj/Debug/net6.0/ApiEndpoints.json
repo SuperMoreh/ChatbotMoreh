@@ -1,0 +1,23 @@
+[
+  {
+    "ContainingType": "ChatbotCobranzaMovil.Controllers.ChatbotController",
+    "Method": "RecibirMensaje",
+    "RelativePath": "Chatbot",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "From",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "Body",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  }
+]

@@ -1,0 +1,47 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "ChatbotCobranzaMovil",
+    "version": "1.0"
+  },
+  "paths": {
+    "/Chatbot": {
+      "post": {
+        "tags": [
+          "Chatbot"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "From": {
+                    "type": "string"
+                  },
+                  "Body": {
+                    "type": "string"
+                  }
+                }
+              },
+              "encoding": {
+                "From": {
+                  "style": "form"
+                },
+                "Body": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success"
+          }
+        }
+      }
+    }
+  },
+  "components": { }
+}
