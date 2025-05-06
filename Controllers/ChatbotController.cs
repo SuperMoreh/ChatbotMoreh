@@ -24,7 +24,7 @@ namespace ChatbotCobranzaMovil.Controllers
 
             var estado = conversaciones[telefono];
 
-            if ((DateTime.Now - estado.UltimoMensaje).TotalSeconds > 30)
+            if ((DateTime.Now - estado.UltimoMensaje).TotalSeconds > 120)
             {
                 conversaciones[telefono] = new Conversacion();
                 estado = conversaciones[telefono];
@@ -45,7 +45,7 @@ namespace ChatbotCobranzaMovil.Controllers
                     estado.Ruta = mensaje.Replace("ruta", "").Trim();
                     if (!string.IsNullOrEmpty(estado.Ruta))
                     {
-                        respuesta.Message("Si necesitas permiso para *generar permiso de sucursal* escribe 1, o si necesitas permiso para *cancelación de recibo*, escribe 2:");
+                        respuesta.Message("Si necesitas permiso para *generar recibo de sucursal* escribe 1, o si necesitas permiso para *cancelación de recibo*, escribe 2:");
                         estado.Paso = 2;
                     }
                     else
@@ -64,12 +64,12 @@ namespace ChatbotCobranzaMovil.Controllers
                     else if (mensaje == "2")
                     {
                         estado.TipoPermiso = "cancelacion";
-                        respuesta.Message("Explica el motivo del permiso de cancelación:");
+                        respuesta.Message("Explica el motivo de tu solicitud:");
                         estado.Paso = 3;
                     }
                     else
                     {
-                        respuesta.Message("Por favor, escribe 1 para *generar permiso de sucursal* o 2 para *cancelación*.");
+                        respuesta.Message("Por favor, escribe 1 para *generar recibo de sucursal* o 2 para *cancelación*.");
                     }
                     break;
 
