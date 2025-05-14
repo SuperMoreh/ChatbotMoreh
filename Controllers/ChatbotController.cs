@@ -51,20 +51,27 @@ namespace ChatbotCobranzaMovil.Controllers
                 switch (estado.Paso)
                 {
                     case 0:
-                        await EnviarMensaje(chatId, "¡Hola! Ingresa tu número de ruta:");
-                        estado.Paso = 1;
+                        if (mensaje == "hola")
+                        {
+                            await EnviarMensaje(chatId, "¡Hola! Ingresa tu número de ruta (1 al 55):");
+                            estado.Paso = 1;
+                        }
+                        else
+                        {
+                            await EnviarMensaje(chatId, "Por favor escribe 'Hola' para comenzar.");
+                        }
                         break;
 
                     case 1:
-                        estado.Ruta = mensaje.Replace("ruta", "").Trim();
-                        if (!string.IsNullOrEmpty(estado.Ruta))
+                        if (int.TryParse(mensaje, out int rutaNumero) && rutaNumero >= 1 && rutaNumero <= 55)
                         {
+                            estado.Ruta = rutaNumero.ToString();
                             await EnviarMensaje(chatId, "Escribe 1 para *generar recibo de sucursal* o 2 para *cancelación de recibo*:");
                             estado.Paso = 2;
                         }
                         else
                         {
-                            await EnviarMensaje(chatId, "Por favor ingresa un número de ruta válido.");
+                            await EnviarMensaje(chatId, "❌ Número inválido. Ingresa un número de ruta entre 1 y 55.");
                         }
                         break;
 
@@ -72,13 +79,13 @@ namespace ChatbotCobranzaMovil.Controllers
                         if (mensaje == "1")
                         {
                             estado.TipoPermiso = "reimpresion";
-                            await EnviarMensaje(chatId, "Explica el motivo de tu solicitud:");
+                            await EnviarMensaje(chatId, "✏️ Explica el motivo de tu solicitud:");
                             estado.Paso = 3;
                         }
                         else if (mensaje == "2")
                         {
                             estado.TipoPermiso = "cancelacion";
-                            await EnviarMensaje(chatId, "Explica el motivo de tu solicitud:");
+                            await EnviarMensaje(chatId, "✏️ Explica el motivo de tu solicitud:");
                             estado.Paso = 3;
                         }
                         else
@@ -126,6 +133,7 @@ namespace ChatbotCobranzaMovil.Controllers
                         conversaciones.TryRemove(chatId, out _);
                         break;
                 }
+
 
                 return Ok();
             }
