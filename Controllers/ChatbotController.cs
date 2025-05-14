@@ -10,14 +10,15 @@ namespace ChatbotCobranzaMovil.Controllers
     [Route("api/telegram")]
     public class TelegramBotController : ControllerBase
     {
-        private static readonly string token = "77409094178:AAFHY0_kL~xcwIT46vFuQDCvVy+f7gnHgXbeY";
+        private static readonly string token = "7740904178:AAFHYO_kl-xcWT46vFuQDCvYyf7gnHgXbeY";
         private static readonly string apiUrl = $"https://api.telegram.org/bot{token}/sendMessage";
         private static ConcurrentDictionary<string, Conversacion> conversaciones = new();
 
         [HttpPost("update")]
         public async Task<IActionResult> RecibirMensaje([FromBody] TelegramUpdate update)
         {
-            if (update?.message?.text == null) return Ok();
+            if (update?.message?.text == null)
+                return Ok(); // prevenir error 400
 
             string chatId = update.message.chat.id.ToString();
             string mensaje = update.message.text.Trim().ToLower();
@@ -142,6 +143,7 @@ namespace ChatbotCobranzaMovil.Controllers
             public DateTime UltimoMensaje { get; set; } = DateTime.Now;
         }
 
+        // 🔧 CLASES MODELO CORRECTAS
         public class TelegramUpdate
         {
             public TelegramMessage message { get; set; }
@@ -151,21 +153,22 @@ namespace ChatbotCobranzaMovil.Controllers
         {
             public long message_id { get; set; }
             public TelegramChat chat { get; set; }
+            public TelegramUser from { get; set; }
             public string text { get; set; }
-        }
-
-
-        public class From
-        {
-            public long id { get; set; }
-            public bool is_bot { get; set; }
-            public string first_name { get; set; }
-            public string username { get; set; }
         }
 
         public class TelegramChat
         {
             public long id { get; set; }
+            public string type { get; set; }
+        }
+
+        public class TelegramUser
+        {
+            public long id { get; set; }
+            public bool is_bot { get; set; }
+            public string first_name { get; set; }
+            public string username { get; set; }
         }
     }
 }
