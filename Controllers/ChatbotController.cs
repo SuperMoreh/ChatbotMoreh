@@ -15,10 +15,15 @@ namespace ChatbotCobranzaMovil.Controllers
         private static ConcurrentDictionary<string, Conversacion> conversaciones = new();
 
         [HttpPost("update")]
-        public async Task<IActionResult> RecibirMensaje([FromBody] TelegramUpdate update)
+        public async Task<IActionResult> RecibirMensaje([FromBody] object rawUpdate)
         {
+            var json = JsonConvert.SerializeObject(rawUpdate);
+            Console.WriteLine("🔎 JSON recibido: " + json);
+
+            var update = JsonConvert.DeserializeObject<TelegramUpdate>(json);
+
             if (update?.message?.text == null)
-                return Ok(); // prevenir error 400
+                return Ok();
 
             string chatId = update.message.chat.id.ToString();
             string mensaje = update.message.text.Trim().ToLower();
