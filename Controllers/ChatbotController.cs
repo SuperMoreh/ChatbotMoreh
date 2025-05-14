@@ -143,36 +143,58 @@ namespace ChatbotCobranzaMovil.Controllers
             public DateTime UltimoMensaje { get; set; } = DateTime.Now;
         }
 
-        // 🔧 CLASES MODELO CORRECTAS
         public class TelegramUpdate
         {
+            [JsonProperty("message")]
             public TelegramMessage message { get; set; }
         }
 
         public class TelegramMessage
         {
+            [JsonProperty("message_id")]
             public long message_id { get; set; }
+
+            [JsonProperty("from")]
             public TelegramUser from { get; set; }
+
+            [JsonProperty("chat")]
             public TelegramChat chat { get; set; }
+
+            [JsonProperty("date")]
             public int date { get; set; }
+
+            [JsonProperty("text")]
             public string text { get; set; }
         }
 
         public class TelegramUser
         {
+            [JsonProperty("id")]
             public long id { get; set; }
+
+            [JsonProperty("is_bot")]
             public bool is_bot { get; set; }
+
+            [JsonProperty("first_name")]
             public string first_name { get; set; }
+
+            [JsonProperty("username")]
             public string username { get; set; }
         }
 
         public class TelegramChat
         {
+            [JsonProperty("id")]
             public long id { get; set; }
+
+            [JsonProperty("first_name")]
             public string first_name { get; set; }
+
+            [JsonProperty("username")]
             public string username { get; set; }
+
+            [JsonProperty("type")]
             public string type { get; set; }
         }
-
     }
 }
