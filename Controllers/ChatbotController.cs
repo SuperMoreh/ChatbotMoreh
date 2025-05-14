@@ -1,35 +1,38 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Twilio.TwiML;
-using Twilio.TwiML.Messaging;
+using Newtonsoft.Json;
+using System.Net.Http;
+using System.Text;
 using System.Collections.Concurrent;
 
 namespace ChatbotCobranzaMovil.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
-    public class ChatbotController : ControllerBase
+    [Route("api/telegram")]
+    public class TelegramBotController : ControllerBase
     {
+        private static readonly string token = "77409094178:AAFHY0_kL~xcwIT46vFuQDCvVy+f7gnHgXbeY";
+        private static readonly string apiUrl = $"https://api.telegram.org/bot{token}/sendMessage";
         private static ConcurrentDictionary<string, Conversacion> conversaciones = new();
 
-        [HttpPost]
-        public IActionResult RecibirMensaje([FromForm] string From, [FromForm] string Body)
+        [HttpPost("update")]
+        public async Task<IActionResult> RecibirMensaje([FromBody] TelegramUpdate update)
         {
-            var respuesta = new MessagingResponse();
+            if (update?.message?.text == null) return Ok();
 
-            var telefono = From;
-            var mensaje = Body?.Trim().ToLower() ?? "";
+            string chatId = update.message.chat.id.ToString();
+            string mensaje = update.message.text.Trim().ToLower();
 
-            if (!conversaciones.ContainsKey(telefono))
-                conversaciones[telefono] = new Conversacion();
+            if (!conversaciones.ContainsKey(chatId))
+                conversaciones[chatId] = new Conversacion();
 
-            var estado = conversaciones[telefono];
+            var estado = conversaciones[chatId];
 
             if ((DateTime.Now - estado.UltimoMensaje).TotalSeconds > 120)
             {
-                conversaciones[telefono] = new Conversacion();
-                estado = conversaciones[telefono];
-                respuesta.Message("⌛ Tu sesión anterior ha expirado por inactividad. Escribe 'Hola' para comenzar de nuevo.");
-                return Content(respuesta.ToString(), "application/xml");
+                conversaciones[chatId] = new Conversacion();
+                estado = conversaciones[chatId];
+                await EnviarMensaje(chatId, "⌛ Tu sesión anterior ha expirado por inactividad. Escribe 'Hola' para comenzar de nuevo.");
+                return Ok();
             }
 
             estado.UltimoMensaje = DateTime.Now;
@@ -37,7 +40,7 @@ namespace ChatbotCobranzaMovil.Controllers
             switch (estado.Paso)
             {
                 case 0:
-                    respuesta.Message("¡Hola! Ingresa tu número de ruta:");
+                    await EnviarMensaje(chatId, "¡Hola! Ingresa tu número de ruta:");
                     estado.Paso = 1;
                     break;
 
@@ -45,12 +48,12 @@ namespace ChatbotCobranzaMovil.Controllers
                     estado.Ruta = mensaje.Replace("ruta", "").Trim();
                     if (!string.IsNullOrEmpty(estado.Ruta))
                     {
-                        respuesta.Message("Si necesitas permiso para *generar recibo de sucursal* escribe 1, o si necesitas permiso para *cancelación de recibo*, escribe 2:");
+                        await EnviarMensaje(chatId, "Escribe 1 para *generar recibo de sucursal* o 2 para *cancelación de recibo*:");
                         estado.Paso = 2;
                     }
                     else
                     {
-                        respuesta.Message("Por favor ingresa un número de ruta válido.");
+                        await EnviarMensaje(chatId, "Por favor ingresa un número de ruta válido.");
                     }
                     break;
 
@@ -58,18 +61,18 @@ namespace ChatbotCobranzaMovil.Controllers
                     if (mensaje == "1")
                     {
                         estado.TipoPermiso = "reimpresion";
-                        respuesta.Message("Explica el motivo de tu solicitud:");
+                        await EnviarMensaje(chatId, "Explica el motivo de tu solicitud:");
                         estado.Paso = 3;
                     }
                     else if (mensaje == "2")
                     {
                         estado.TipoPermiso = "cancelacion";
-                        respuesta.Message("Explica el motivo de tu solicitud:");
+                        await EnviarMensaje(chatId, "Explica el motivo de tu solicitud:");
                         estado.Paso = 3;
                     }
                     else
                     {
-                        respuesta.Message("Por favor, escribe 1 para *generar recibo de sucursal* o 2 para *cancelación*.");
+                        await EnviarMensaje(chatId, "Por favor, escribe 1 para *reimpresión* o 2 para *cancelación*.");
                     }
                     break;
 
@@ -94,37 +97,41 @@ namespace ChatbotCobranzaMovil.Controllers
                         var permisoResponse = firebase.client.Set($"Permisos/{ruta}/{tipo}", "1");
 
                         if (infoResponse.StatusCode.ToString() == "OK" && permisoResponse.StatusCode.ToString() == "OK")
-                        {
-                            respuesta.Message("✅ Permiso otorgado exitosamente. ¡Hasta luego!");
-                        }
+                            await EnviarMensaje(chatId, "✅ Permiso otorgado exitosamente. ¡Hasta luego!");
                         else
-                        {
-                            respuesta.Message("❌ Ocurrió un problema al otorgar el permiso. Intenta nuevamente.");
-                        }
+                            await EnviarMensaje(chatId, "❌ Ocurrió un problema al otorgar el permiso. Intenta nuevamente.");
                     }
                     catch (Exception ex)
                     {
-                        respuesta.Message("⚠️ Ocurrió un error al conectar con Firebase.");
+                        await EnviarMensaje(chatId, "⚠️ Error al conectar con Firebase.");
                         Console.WriteLine("Firebase Error: " + ex.Message);
                     }
 
-                    conversaciones.TryRemove(telefono, out _);
+                    conversaciones.TryRemove(chatId, out _);
                     break;
 
                 default:
-                    respuesta.Message("Algo salió mal. Escribe 'Hola' para empezar de nuevo.");
-                    conversaciones.TryRemove(telefono, out _);
+                    await EnviarMensaje(chatId, "Algo salió mal. Escribe 'Hola' para empezar de nuevo.");
+                    conversaciones.TryRemove(chatId, out _);
                     break;
             }
 
-            return Content(respuesta.ToString(), "application/xml");
-        }
-        [HttpGet("keepalive")]
-        public IActionResult KeepAlive()
-        {
-            return Ok("Chatbot activo");
+            return Ok();
         }
 
+        private async Task EnviarMensaje(string chatId, string texto)
+        {
+            using var client = new HttpClient();
+            var payload = new
+            {
+                chat_id = chatId,
+                text = texto,
+                parse_mode = "Markdown"
+            };
+
+            var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
+            await client.PostAsync(apiUrl, content);
+        }
 
         public class Conversacion
         {
@@ -133,6 +140,33 @@ namespace ChatbotCobranzaMovil.Controllers
             public string TipoPermiso { get; set; } = "";
             public string Motivo { get; set; } = "";
             public DateTime UltimoMensaje { get; set; } = DateTime.Now;
+        }
+
+        public class TelegramUpdate
+        {
+            public Message message { get; set; }
+        }
+
+        public class Message
+        {
+            public long message_id { get; set; }
+            public From from { get; set; }
+            public Chat chat { get; set; }
+            public string text { get; set; }
+        }
+
+        public class From
+        {
+            public long id { get; set; }
+            public bool is_bot { get; set; }
+            public string first_name { get; set; }
+            public string username { get; set; }
+        }
+
+        public class Chat
+        {
+            public long id { get; set; }
+            public string type { get; set; }
         }
     }
 }
