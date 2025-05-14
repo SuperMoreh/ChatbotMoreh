@@ -144,16 +144,16 @@ namespace ChatbotCobranzaMovil.Controllers
 
         public class TelegramUpdate
         {
-            public Message message { get; set; }
+            public TelegramMessage message { get; set; }
         }
 
-        public class Message
+        public class TelegramMessage
         {
             public long message_id { get; set; }
-            public From from { get; set; }
-            public Chat chat { get; set; }
+            public TelegramChat chat { get; set; }
             public string text { get; set; }
         }
+
 
         public class From
         {
@@ -163,10 +163,9 @@ namespace ChatbotCobranzaMovil.Controllers
             public string username { get; set; }
         }
 
-        public class Chat
+        public class TelegramChat
         {
             public long id { get; set; }
-            public string type { get; set; }
         }
     }
 }
