@@ -119,6 +119,12 @@ namespace ChatbotCobranzaMovil.Controllers
 
             return Content(respuesta.ToString(), "application/xml");
         }
+        [HttpGet("keepalive")]
+        public IActionResult KeepAlive()
+        {
+            return Ok("Chatbot activo");
+        }
+
 
         public class Conversacion
         {
